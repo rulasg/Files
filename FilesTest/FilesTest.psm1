@@ -145,4 +145,101 @@ function FilesTest_GetIncrementaName_onPath_Pipe{
     Assert-AreEqual -Expected $filename4 -Presented $result
 }
 
+function FilesTest_MoveFile_Simple{
+    
+    $filename = "filename.txt"
+    $folderName = "folder"
+    
+    New-TestingFolder -Path $folderName
+    New-TestingFile -Name $filename
+
+    #File and folder
+    $result = Move-FileToDestination -Path "fakefile.txt" -Destination "Fakefolder" -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+    
+    Assert-IsNotNull -Object $result
+    Assert-AreEqual -Expected 0 -Presented $result.Moved
+    Assert-AreEqual -Expected 0 -Presented $result.Renamed
+    Assert-Count -Expected 1 -Presented $errorVar
+    Assert-AreEqual -Expected "Destination not found [Fakefolder]" -Presented $errorVar[0]
+
+    # File not exit
+    $result = Move-FileToDestination -Path "fakefile.txt" -Destination $folderName -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+
+    Assert-IsNotNull -Object $result
+    Assert-AreEqual -Expected 0 -Presented $result.Moved
+    Assert-AreEqual -Expected 0 -Presented $result.Renamed
+    Assert-Count -Expected 1 -Presented $errorVar
+    Assert-AreEqual -Expected "Source path not found [fakefile.txt]" -Presented $errorVar[0]
+    
+    #Folder not exits
+    $result = Move-FileToDestination -Path $filename -Destination "Fakefolder" -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+    
+    Assert-IsNotNull -Object $result
+    Assert-AreEqual -Expected 0 -Presented $result.Moved
+    Assert-AreEqual -Expected 0 -Presented $result.Renamed
+    Assert-Count -Expected 1 -Presented $errorVar
+    Assert-AreEqual -Expected "Destination not found [Fakefolder]" -Presented $errorVar[0]
+
+    # All exist single 
+    $result = Move-FileToDestination -Path $filename -Destination $folderName -WhatIf -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+
+    Assert-IsNotNull -Object $result
+    Assert-Count -Expected 1 -Presented $result
+    Assert-AreEqual -Expected 1 -Presented $result.Moved
+    Assert-AreEqual -Expected 0 -Presented $result.Renamed
+    Assert-Count -Expected 0 -Presented $errorVar
+    Assert-ItemExist -Path $filename 
+    Assert-ItemNotExist -Path ($folderName | Join-Path -ChildPath $filename)
+
+    # All exist single 
+    $result = Move-FileToDestination -Path $filename -Destination $folderName -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+
+    Assert-IsNotNull -Object $result
+    Assert-Count -Expected 1 -Presented $result
+    Assert-AreEqual -Expected 1 -Presented $result.Moved
+    Assert-AreEqual -Expected 0 -Presented $result.Renamed
+    Assert-Count -Expected 0 -Presented $errorVar
+    Assert-ItemNotExist -Path $filename 
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename)
+        
+}
+
+
+function FilesTest_MoveFile_Simple_rename{
+    
+    $filename = "filename.txt"
+    $filename1 = "filename(1).txt"
+    $folderName = "folder"
+    
+    New-TestingFolder -Path $folderName
+    New-TestingFile -Name $filename 
+    New-TestingFile -Name $filename -Path $folderName
+
+    $result = Move-FileToDestination -Path $filename -Destination $folderName -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+
+    Assert-IsNotNull -Object $result
+    Assert-Count -Expected 1 -Presented $result
+    Assert-AreEqual -Expected 1 -Presented $result.Moved
+    Assert-AreEqual -Expected 1 -Presented $result.Renamed
+    Assert-Count -Expected 0 -Presented $errorVar
+    Assert-ItemNotExist -Path $filename 
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename)
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename1)
+}
+
+function FilesTest_MoveFile_Simple_NoDestination{
+    Assert-NotImplemented
+}
+
+function FilesTest_MoveFile_Path_WildChar{
+    Assert-NotImplemented
+}
+
+function FilesTest_MoveFile_Path_Pipe{
+    Assert-NotImplemented
+}
+function FilesTest_MoveFileToDestination{
+    Assert-NotImplemented
+}
+
 Export-ModuleMember -Function FilesTest_*
