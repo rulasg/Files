@@ -161,12 +161,11 @@ function Move-FileToDestination {
            
             #Move
             
-            if ($PSCmdlet.ShouldProcess($file.FullName, "Move")) {
-                "[{0}] -> [{1}]" -f $file.FullName, $targetpath | Write-Verbose 
+            $movemessage = "[{0}] -> [{1}]" -f $file.FullName, $targetpath
+
+            if ($PSCmdlet.ShouldProcess($movemessage,"MOVE")) {
                 Move-Item -Path $File -Destination $targetpath  
-            } else {
-                "[{0}] -> [{1}]" -f $file.FullName, $targetpath | Write-Host 
-            }
+            } 
 
             # [PSCustomObject]@{
             #     Source = $file.FullName

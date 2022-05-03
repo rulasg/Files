@@ -180,7 +180,7 @@ function FilesTest_MoveFile_Simple{
     Assert-Count -Expected 1 -Presented $errorVar
     Assert-AreEqual -Expected "Destination not found [Fakefolder]" -Presented $errorVar[0]
 
-    # All exist single 
+    # All WhatIF 
     $result = Move-FileToDestination -Path $filename -Destination $folderName -WhatIf -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
 
     Assert-IsNotNull -Object $result
@@ -227,16 +227,55 @@ function FilesTest_MoveFile_Simple_rename{
     Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename1)
 }
 
-function FilesTest_MoveFile_Simple_NoDestination{
-    Assert-NotImplemented
-}
-
 function FilesTest_MoveFile_Path_WildChar{
-    Assert-NotImplemented
+    
+    $filename = "filename.txt"
+    $filename2 = "filename2.txt"
+    $filename1 = "filename(1).txt"
+    $folderName = "folder"
+    
+    New-TestingFolder -Path $folderName
+    New-TestingFile -Name $filename 
+    New-TestingFile -Name $filename2 
+    New-TestingFile -Name $filename -Path $folderName
+
+    $result = Move-FileToDestination -Path filename*.txt -Destination $folderName -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+
+    Assert-IsNotNull -Object $result
+    Assert-Count -Expected 1 -Presented $result
+    Assert-AreEqual -Expected 2 -Presented $result.Moved
+    Assert-AreEqual -Expected 1 -Presented $result.Renamed
+    Assert-Count -Expected 0 -Presented $errorVar
+    Assert-ItemNotExist -Path $filename 
+    Assert-ItemNotExist -Path $filename1 
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename)
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename1)
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename2)
 }
 
 function FilesTest_MoveFile_Path_Pipe{
-    Assert-NotImplemented
+    $filename = "filename.txt"
+    $filename2 = "filename2.txt"
+    $filename1 = "filename(1).txt"
+    $folderName = "folder"
+    
+    New-TestingFolder -Path $folderName
+    New-TestingFile -Name $filename 
+    New-TestingFile -Name $filename2 
+    New-TestingFile -Name $filename -Path $folderName
+
+    $result = Get-ChildItem filename*.txt | Move-FileToDestination -Destination $folderName -ErrorVariable 'errorVar' -ErrorAction SilentlyContinue
+
+    Assert-IsNotNull -Object $result
+    Assert-Count -Expected 1 -Presented $result
+    Assert-AreEqual -Expected 2 -Presented $result.Moved
+    Assert-AreEqual -Expected 1 -Presented $result.Renamed
+    Assert-Count -Expected 0 -Presented $errorVar
+    Assert-ItemNotExist -Path $filename 
+    Assert-ItemNotExist -Path $filename2 
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename)
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename1)
+    Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename2)
 }
 function FilesTest_MoveFileToDestination{
     Assert-NotImplemented
