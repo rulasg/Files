@@ -145,7 +145,7 @@ function FilesTest_GetIncrementaName_onPath_Pipe{
     Assert-AreEqual -Expected $filename4 -Presented $result
 }
 
-function FilesTest_MoveFile_Simple{
+function FilesTest_MoveFileToDestination_Simple{
     
     $filename = "filename.txt"
     $folderName = "folder"
@@ -205,7 +205,7 @@ function FilesTest_MoveFile_Simple{
 }
 
 
-function FilesTest_MoveFile_Simple_rename{
+function FilesTest_MoveFileToDestination_Simple_rename{
     
     $filename = "filename.txt"
     $filename1 = "filename(1).txt"
@@ -227,7 +227,7 @@ function FilesTest_MoveFile_Simple_rename{
     Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename1)
 }
 
-function FilesTest_MoveFile_Path_WildChar{
+function FilesTest_MoveFileToDestination_Path_WildChar{
     
     $filename = "filename.txt"
     $filename2 = "filename2.txt"
@@ -253,7 +253,7 @@ function FilesTest_MoveFile_Path_WildChar{
     Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename2)
 }
 
-function FilesTest_MoveFile_Path_Pipe{
+function FilesTest_MoveFileToDestination_Path_Pipe{
     $filename = "filename.txt"
     $filename2 = "filename2.txt"
     $filename1 = "filename(1).txt"
@@ -278,6 +278,9 @@ function FilesTest_MoveFile_Path_Pipe{
     Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename2)
 }
 function FilesTest_MoveFileToDestination{
+
+    $result = Move-File -Path "Fake" -Destination "Fake"
+    
     Assert-NotImplemented
 }
 
