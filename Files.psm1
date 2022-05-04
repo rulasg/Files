@@ -74,6 +74,96 @@ function Move-File {
     }
 }
 
+function Move-File2 {
+    <#
+    .SYNOPSIS
+        Move files to destination checking if content already there.
+    .DESCRIPTION
+        Long description
+    .EXAMPLE
+        Example of how to use this cmdlet
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param (
+        [Parameter(Mandatory,Position=0,ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [Alias("PSPath")]
+        [string[]] $Path,
+        [Parameter()] [string] $Destination
+
+    )
+    
+    begin {
+        $count = 0 
+        $countRenamed = 0
+
+        $Destination ??= "."
+
+        if (!($Destination | Test-Path)) {
+            "Destination not found [{0}]" -f $Destination | Write-Error
+            $Destination = $null
+            return
+        }
+    }
+    
+    process {
+
+        if (!$Destination) {
+            return $null
+        }
+
+        if (!($Path | Test-Path)) {
+            "Source path not found [{0}]" -f $Path | Write-Error
+            return
+        }
+
+        $files = Get-ChildItem -Path $Path 
+        foreach ($file in $files) {
+        
+            $count++
+
+            $p = $count%100
+            Write-Progress -Activity "Move-File" -Status "Working" -CurrentOperation $file.FullName -PercentComplete $p
+    
+            $fullName = $file.FullName
+    
+            #Exists content in destination
+            $fileHash = Get-FileHash -Path $file
+            $fileFound = Find-HashTable -FileHash $fileHash
+    
+            if ($fileFound) {
+                "Content [{0}] found on destination =>  [$fileFound]" -f $file.FullName,$fileFound | Write-Warning 
+    
+                Write-Verbose -Message "Decide what to do if Skip or move to a different place."            
+            } else {
+                #MoveAndUpdate
+                $MovedFile = Move-FileToDestination -File $file -Destination $Destination
+                Update-HashTable -File $MovedFile
+            }
+    
+
+            #Move
+            
+            $movemessage = "[{0}] -> [{1}]" -f $file.FullName, $targetpath
+
+            if ($PSCmdlet.ShouldProcess($movemessage,"MOVE")) {
+                Move-Item -Path $file -Destination $targetpath  
+            } 
+
+            # [PSCustomObject]@{
+            #     Source = $file.FullName
+            #     Destination = $targetpath.FullName
+            # }
+        }
+    }
+    
+    end {
+        [PSCustomObject]@{
+            Moved = $count
+            Renamed = $countRenamed          
+        }
+    }
+}
+
 function Get-FileCopyName{
     [CmdletBinding()]
     param (
@@ -120,7 +210,6 @@ function Move-FileToDestination {
         [Alias("PSPath")]
         [string[]] $Path,
         [Parameter()] [string] $Destination
-
     )
     
     begin {
@@ -219,3 +308,61 @@ function Compare-File{
 
     return $p1.Hash -eq $p2.Hash
 }
+
+function Test-FileContent{
+    param (
+        [Parameter(Mandatory,Position=0,ValueFromPipeline,ValueFromPipelineByPropertyName)]
+        [Alias("PSPath")]
+        [string[]] $Path,
+        [Parameter()] [string] $Destination
+    )
+
+    begin {
+        $count = 0 
+        $countRenamed = 0
+
+        if ([string]::IsNullOrEmpty($Destination)) {
+            $Destination = (Get-location).Path
+        }
+
+        if (!($Destination | Test-Path)) {
+            "Destination not found [{0}]" -f $Destination | Write-Error
+            $Destination = $null
+            return
+        }
+    }
+
+    process{
+
+        if (!($Path | Test-Path)) {
+            "Source path not found [{0}]" -f $Path | Write-Error
+            return
+        }
+
+        $files = Get-ChildItem -Path $Path
+        foreach ($file in $files) {
+            
+            $sourceFile = $file | Convert-Path
+            $destinationFile = $Destination | Join-Path -ChildPath ($sourceFile | Split-Path -Leaf) | Convert-Path
+
+            # Check if destination file does not exist
+            if (!($destinationFile| Test-path)) {
+                return $false
+            } 
+
+            # Check if they are the same file
+            if ($sourceFile -eq $destinationFile) {
+                "Compareing the same file [{0}]" -f $sourceFile | Write-warning
+                return $true
+            }
+            
+            # Compare file content
+            $hasSource = $sourceFile | Get-FileHash
+            $hasDestination = $destinationFile | Get-FileHash
+            
+            return ($hasSource.Hash -eq $hasDestination.Hash)
+            
+        }
+    }
+}
+

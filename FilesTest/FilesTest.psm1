@@ -277,11 +277,81 @@ function FilesTest_MoveFileToDestination_Path_Pipe{
     Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename1)
     Assert-ItemExist -Path ($folderName | Join-Path -ChildPath $filename2)
 }
-function FilesTest_MoveFileToDestination{
+function FilesTest_MoveFile_Simple{
 
-    $result = Move-File -Path "Fake" -Destination "Fake"
-    
+    # $result = Move-File -Path "Fake" -Destination "Fake"
+
     Assert-NotImplemented
 }
+
+ function FilesTest_TestFileContent_Simple{
+    $filename = "filename.txt"
+    $filename1 = "filename(1).txt"
+    $folderName = "folder"
+    $Content1 = "some content that we can add to a file"
+    
+    New-TestingFolder -Path $folderName
+    New-TestingFile -Name $filename -Content $Content1
+    New-TestingFile -Name $filename -Path $folderName -Content $Content1
+
+    $result = $filename | Test-FileContent  -Destination $folderName
+
+    Assert-AreEqual -Expected (cat $filename) -Presented (cat .\folder\filename.txt)
+    Assert-IsTrue -Condition $result
+
+    Assert-NotImplemented
+} 
+
+function FilesTest_TestFileContent_Simple{
+    
+    $filename = "filename.txt"
+    $folderName = "folder"
+    $Content1 = "some content that we can add to a file"
+    
+    New-TestingFolder -Path $folderName
+
+    # Files are the same
+    New-TestingFile -Name $filename -Content $Content1
+    New-TestingFile -Name $filename -Path $folderName -Content $Content1
+
+    $result = $filename | Test-FileContent  -Destination $folderName
+    
+    Assert-IsTrue -Condition $result
+    
+    # Files are diferent
+
+    New-TestingFile -Name $filename -Path $folderName -Content "Some other content" 
+
+    $result = $filename | Test-FileContent  -Destination $folderName
+    
+    Assert-IsFalse -Condition $result
+} 
+
+function FilesTest_TestFileContent_No_Destination{
+
+    $filename = "filename.txt"
+    $folderName = "folder"
+    $Content1 = "some content that we can add to a file"
+    
+    New-TestingFolder -Path $folderName
+
+    # No destination poiting to root file. They are the same file.
+    New-TestingFile -Name $filename -Content $Content1
+    $TargetFile = New-TestingFile -Name $filename -Path $folderName -Content $Content1 -PassThru
+    
+    $result = $filename | Test-FileContent -WarningAction SilentlyContinue -WarningVariable 'warningVar'
+    
+    Assert-IsTrue -Condition $result
+    Assert-Count -Expected 1 -Presented $WarningVar
+    Assert-AreEqual -Presented $WarningVar[0].Message -Expected ("Compareing the same file [{0}]" -f ($filename | Convert-Path))
+    
+    # No destination poiting to folder file. They are the same file.
+
+    $result = $TargetFile | Test-FileContent -WarningAction SilentlyContinue -WarningVariable 'warningVar'
+    
+    Assert-IsTrue -Condition $result
+    Assert-IsNull -Object $WarningVar    
+} 
+
 
 Export-ModuleMember -Function FilesTest_*
