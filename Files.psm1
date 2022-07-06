@@ -271,20 +271,6 @@ function Move-FileToDestination {
     }
 }
 
-<#
-.SYNOPSIS
-    Compares two files
-.DESCRIPTION
-    Compares if two files have the same content
-.PARAMETER Path1
-    First file
-.PARAMETER Path2
-    Second file
-.EXAMPLE
-    Compare-File -Path c:\this.txt -With d:\thas.txt
-.NOTES
-    General notes
-#>
 function Compare-File{
     [CmdletBinding()]
     param (
@@ -303,6 +289,14 @@ function Compare-File{
         return $false
     }
 
+    $pathFile = $Path | Resolve-Path
+    $withFile = $With | Resolve-Path
+
+    if ($pathFile -eq $withFile) {
+        "Compareing the same file [{0}]" -f $sourceFile | Write-warning
+        return $true
+    }
+
     $p1 = Get-FileHash -Path $Path
     $p2 = Get-FileHash -Path $With
 
@@ -310,6 +304,7 @@ function Compare-File{
 }
 
 function Test-FileContent{
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory,Position=0,ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [Alias("PSPath")]
@@ -342,27 +337,14 @@ function Test-FileContent{
         $files = Get-ChildItem -Path $Path
         foreach ($file in $files) {
             
-            $sourceFile = $file | Convert-Path
-            $destinationFile = $Destination | Join-Path -ChildPath ($sourceFile | Split-Path -Leaf) | Convert-Path
+            $destinationFilePath = $Destination | Join-Path -ChildPath ($file | Split-Path -Leaf) | Convert-Path
+            
+            $ret = Compare-File -Path $file -With $destinationFilePath
 
-            # Check if destination file does not exist
-            if (!($destinationFile| Test-path)) {
-                return $false
-            } 
-
-            # Check if they are the same file
-            if ($sourceFile -eq $destinationFile) {
-                "Compareing the same file [{0}]" -f $sourceFile | Write-warning
-                return $true
-            }
-            
-            # Compare file content
-            $hasSource = $sourceFile | Get-FileHash
-            $hasDestination = $destinationFile | Get-FileHash
-            
-            return ($hasSource.Hash -eq $hasDestination.Hash)
-            
+            return $ret
         }
     }
 }
+
+
 

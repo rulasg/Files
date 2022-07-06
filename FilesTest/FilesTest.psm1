@@ -286,7 +286,6 @@ function FilesTest_MoveFile_Simple{
 
  function FilesTest_TestFileContent_Simple{
     $filename = "filename.txt"
-    $filename1 = "filename(1).txt"
     $folderName = "folder"
     $Content1 = "some content that we can add to a file"
     
@@ -294,15 +293,14 @@ function FilesTest_MoveFile_Simple{
     New-TestingFile -Name $filename -Content $Content1
     New-TestingFile -Name $filename -Path $folderName -Content $Content1
 
-    $result = $filename | Test-FileContent  -Destination $folderName
+    # Files with same content
+    $result = Test-FileContent  -Path $filename -Destination $folderName
 
-    Assert-AreEqual -Expected (cat $filename) -Presented (cat .\folder\filename.txt)
     Assert-IsTrue -Condition $result
 
-    Assert-NotImplemented
 } 
 
-function FilesTest_TestFileContent_Simple{
+function FilesTest_TestFileContent_Simple_Pipe{
     
     $filename = "filename.txt"
     $folderName = "folder"
