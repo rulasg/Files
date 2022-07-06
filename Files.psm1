@@ -313,8 +313,6 @@ function Test-FileContent{
     )
 
     begin {
-        $count = 0 
-        $countRenamed = 0
 
         if ([string]::IsNullOrEmpty($Destination)) {
             $Destination = (Get-location).Path
@@ -346,5 +344,110 @@ function Test-FileContent{
     }
 }
 
+function Get-FilesDetails{
+    [CmdletBinding()]
+    param(
+        [Parameter(Position=0,ValueFromPipeline,ValueFromPipelineByPropertyName)][Alias("PSPath")][string[]]$Path
+    )
 
+    begin{
+        $objShell = New-Object -ComObject Shell.application
+    }
 
+    process{
+        if([string]::IsNullOrWhiteSpace($Path)){$Path = Get-Location}
+        
+        $items = @($Path | Get-ChildItem -File )
+        
+        foreach ($item in $items) {
+
+            $details = @{}
+
+            $folder = $item | Split-Path -Parent
+            $strFileName = $item.Name
+
+            $objFolder = $objShell.NameSpace($folder)
+            $ObjFile = $objFolder.ParseName($strFileName )
+
+            # while ($i -le 266 -and ($objFolder.getDetailsOf($file.BaseName,$i++) -ne $DetailName)) {}
+
+            for ($a = 0; $a -le 266; $a++) 
+            { 
+                $detailValue = $objFolder.getDetailsOf($ObjFile, $a)
+                
+                if($detailValue){
+                    $detailName = $objFolder.getDetailsOf($objFolder.items, $a)
+                    "{0} - {1} - {2}" -f $a, $detailName, $detailValue | Write-Verbose
+
+                    $details += @{ $detailName  = $detailValue }
+                }
+                
+            } #end for
+
+            # $ret += [PSCustomObject] $details
+            return [PSCustomObject] $details
+        }
+
+        end {
+
+        }
+    }    
+}
+
+function Get-FilesDetail{
+    [CmdletBinding()]
+    param(
+        [Parameter(Position=0,ValueFromPipeline,ValueFromPipelineByPropertyName)][Alias("PSPath")][string[]]$Path,
+        [Parameter()][string]$DetailName
+    )
+
+    begin{
+        $objShell = New-Object -ComObject Shell.application
+    }
+
+    process{
+        if([string]::IsNullOrWhiteSpace($Path)){$Path = Get-Location}
+        
+        $items = @($Path | Get-ChildItem -File )
+        
+        foreach ($item in $items) {
+
+            $details = @{}
+
+            $folder = $item | Split-Path -Parent
+            $strFileName = $item.Name
+
+            $objFolder = $objShell.NameSpace($folder)
+            $ObjFile = $objFolder.ParseName($strFileName )
+
+            $details = GetDetailsName($objFolder)
+            $id = $details.$DetailName
+            
+            if ($id){
+
+                $value = $objFolder.getDetailsOf($ObjFile, $details.$DetailName)
+
+                if($value){
+                    return $value
+                }
+            }
+
+            return $null
+        }
+    }
+       
+}
+
+function GetDetailsName($objFolder){
+    $ret = @{}
+    
+    for ($i = 0; $i -lt 266; $i++) {
+        $d = $objFolder.GetDetailsOf($null,$i)
+        # check Detail not empty and not yet added to list
+        if ($d -and !($ret.$d)) {
+            $ret.Add($d,$i)
+        }
+    }
+
+    return $ret
+}

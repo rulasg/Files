@@ -14,6 +14,16 @@ CREATED: 03/05/2022
 
 Write-Host "Loading FilesTest ..." -ForegroundColor DarkCyan
 
+$ErrorParameters = @{
+    ErrorAction = 'SilentlyContinue' 
+    ErrorVariable = 'errorVar'
+}
+
+$InfoParameters = @{
+    InformationAction = 'SilentlyContinue' 
+    InformationVariable = 'infoVar'
+}
+
 function FilesTest_CompareFile_NotExists{
 
     $result = Compare-File -Path "SomeFile.txt" -With "Otherfile.txt" -ErrorVariable 'testErrors' -ErrorAction SilentlyContinue
@@ -351,5 +361,121 @@ function FilesTest_TestFileContent_No_Destination{
     Assert-IsNull -Object $WarningVar    
 } 
 
+function FilesTest_GetFilesDetails_Simple{
+
+    $file = New-TestingFile -PassThru
+
+    $result = Get-FilesDetails -Path $file
+
+    Assert-AreEqual -Expected $file.Name                                    -Presented $result.Name
+    Assert-AreEqual -Expected $file.Name                                    -Presented $result.Filename
+    Assert-AreEqual -Expected ($file.CreationTime | Get-Date -Format "g")   -Presented $result."Date created"
+    Assert-AreEqual -Expected ($file.LastAccessTime | Get-Date -Format "g") -Presented $result."Date accessed"
+    Assert-AreEqual -Expected ($file.LastWriteTime | Get-Date -Format "g")  -Presented $result."Date modified"
+    Assert-AreEqual -Expected ($file.Extension)                             -Presented $result."File extension"
+
+    Assert-AreEqual -Expected ($file.FullName)                              -Presented $result.Path
+    Assert-AreEqual -Expected ($file.Directory.Name)                        -Presented $result."Folder name"
+    Assert-AreEqual -Expected ($file.DirectoryName)                         -Presented $result."Folder path"
+    Assert-AreEqual -Expected $file.Length                                  -Presented $result.Size.Substring(0,2)
+
+    ## Properties
+    # Name                      Property       string Name {get;}
+    # CreationTime              Property       datetime CreationTime {get;set;}
+    # LastAccessTime            Property       datetime LastAccessTime {get;set;}
+    # LastWriteTime             Property       datetime LastWriteTime {get;set;}
+    # Extension                 Property       string Extension {get;}
+    # FullName                  Property       string FullName {get;}
+    # Directory                 Property       System.IO.DirectoryInfo Directory {get;}
+    # DirectoryName             Property       string DirectoryName {get;}
+    # Length                    Property       long Length {get;}
+
+    # Exists                    Property       bool Exists {get;}
+    # IsReadOnly                Property       bool IsReadOnly {get;set;}
+    # CreationTimeUtc           Property       datetime CreationTimeUtc {get;set;}
+    # LastAccessTimeUtc         Property       datetime LastAccessTimeUtc {get;set;}
+    # LastWriteTimeUtc          Property       datetime LastWriteTimeUtc {get;set;}
+    # LinkTarget                Property       string LinkTarget {get;}
+
+    ## Details
+    #Name                           41fcfbb4-cb17-425c-a1e1-659a26d8bc03.txt
+    #Filename                       41fcfbb4-cb17-425c-a1e1-659a26d8bc03.txt
+    #Date created                   06/07/2022 10:37
+    #Date accessed                  06/07/2022 10:37
+    #Date modified                  06/07/2022 10:37
+    #File extension                 .txt
+    #Path                           C:\Users\raulg\AppData\Local\Temp\Posh_Testing_220706\TestRunFolder\FilesTest_GetFilesDetails_Simple\41fcfbb4-cb17-425c-a1e1-659a26d8bc03.txt
+    #Folder name                    FilesTest_GetFilesDetails_Simple
+    #Folder path                    C:\Users\raulg\AppData\Local\Temp\Posh_Testing_220706\TestRunFolder\FilesTest_GetFilesDetails_Simple
+    #Size                           14 bytes
+
+    #Kind                           Document
+    #Type                           Text Document
+    #Item type                      Text Document
+    #Perceived type                 Text
+    #Folder                         FilesTest_GetFilesDetails_Simple (C:\Users\raulg\AppData\Local\Temp\Posh_Testing_220706\TestRunFolder)
+
+    # Attributes                     A
+    # Space used                     ‎92%
+    # Shared                         No
+    # Computer                       RAULG10 (this PC)
+    # Total size                     236 GB
+    # Link status                    Unresolved
+    # Rating                         Unrated
+    # Owner                          RAULG10\raulg
+    # Space free                     17,3 GB
+
+
+}
+
+function FilesTest_GetFilesDetails_MultipleFiles{
+    
+    $file1 = New-TestingFile -PassThru
+    $file2 = New-TestingFile -PassThru
+
+    $result = Get-ChildItem |  Get-FilesDetails
+    
+    Assert-Count -Expected 2 -Presented $result
+    Assert-Contains -Expected $file1.Name -Presented ($result.Name)
+
+}
+
+function FilesTest_GetFilesDetail_Simple{
+    
+    $file = New-TestingFile -PassThru
+
+    $result = $file | Get-FilesDetail -DetailName "Date created"
+    
+    Assert-AreEqual -Expected ($file.CreationTime | Get-Date -Format "g") -Presented $result
+}
+
+function FilesTest_GetFilesDetail_DetailNoValue{
+    
+    $file1 = New-TestingFile -PassThru
+
+    $result = $file1 | Get-FilesDetail -DetailName "Date taken"
+
+    Assert-IsNull -Object $result
+
+}
+
+function FilesTest_GetFilesDetail_DetailNotExist{
+    
+    $file1 = New-TestingFile -PassThru
+
+    $result = $file1 | Get-FilesDetail -DetailName "fake detail name"
+
+    Assert-IsNull -Object $result
+
+}
+
+function FilesTest_GetFilesDetail_FileNotExist{
+    
+    $result = Get-FilesDetail -Path "Fakename.txt" -DetailName "Date created" @ErrorParameters
+
+    Assert-IsNull -Object $result
+    Assert-Count -Expected 1 -Presented $errorVar
+
+}
 
 Export-ModuleMember -Function FilesTest_*
