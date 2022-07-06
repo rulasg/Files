@@ -352,6 +352,7 @@ function Get-FilesDetails{
 
     begin{
         $objShell = New-Object -ComObject Shell.application
+        $countNamespace = 0
     }
 
     process{
@@ -359,6 +360,7 @@ function Get-FilesDetails{
         
         $items = @($Path | Get-ChildItem -File )
         
+
         foreach ($item in $items) {
 
             $details = @{}
@@ -366,32 +368,48 @@ function Get-FilesDetails{
             $folder = $item | Split-Path -Parent
             $strFileName = $item.Name
 
-            $objFolder = $objShell.NameSpace($folder)
-            $ObjFile = $objFolder.ParseName($strFileName )
+            if (!($objFolder) -or ($folder -ne $objFolder.Self.Path)) {
+                $countNamespace++
+                # $countObjShellNameSpace += (Measure-Command {
+                    $objFolder = $objShell.NameSpace($folder)
+                #}).Milliseconds
+                }
+
+            # $countObjFolderParseName += (Measure-Command {
+                $ObjFile = $objFolder.ParseName($strFileName )
+            #}).Milliseconds
 
             # while ($i -le 266 -and ($objFolder.getDetailsOf($file.BaseName,$i++) -ne $DetailName)) {}
-
             for ($a = 0; $a -le 266; $a++) 
             { 
+                # $countObjFoldergetDetailsOfValue += (Measure-Command {
                 $detailValue = $objFolder.getDetailsOf($ObjFile, $a)
+                #}).Milliseconds
                 
+                # $countObjFoldergetDetailsOfName += (Measure-Command {
                 if($detailValue){
-                    $detailName = $objFolder.getDetailsOf($objFolder.items, $a)
-                    "{0} - {1} - {2}" -f $a, $detailName, $detailValue | Write-Verbose
-
-                    $details += @{ $detailName  = $detailValue }
-                }
+                        $detailName = $objFolder.getDetailsOf($null, $a)
+                        "{0} - {1} - {2}" -f $a, $detailName, $detailValue | Write-Verbose
+                        
+                        $details += @{ $detailName  = $detailValue }
+                    }
+                #}).Milliseconds
                 
             } #end for
 
             # $ret += [PSCustomObject] $details
             return [PSCustomObject] $details
         }
-
-        end {
-
-        }
     }    
+    end {
+        # return @{
+        #     countObjShellNameSpace = $countObjShellNameSpace
+        #     countObjFolderParseName = $countObjFolderParseName
+        #     countObjFoldergetDetailsOfValue = $countObjFoldergetDetailsOfValue
+        #     countObjFoldergetDetailsOfName= $countObjFoldergetDetailsOfName
+        #     countNamespace = $countNamespace
+        # }            
+    }
 }
 
 function Get-FilesDetail{

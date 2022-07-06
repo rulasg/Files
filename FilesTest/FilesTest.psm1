@@ -440,6 +440,31 @@ function FilesTest_GetFilesDetails_MultipleFiles{
 
 }
 
+function FilesTest_GetFilesDetails_SimpleManyFiles{
+    
+    $num = 10
+
+    1..$num | ForEach-Object{
+        New-TestingFile
+    }
+
+    $count1 = Measure-Command {
+        $result1 = Get-ChildItem |  Get-FilesDetails 
+    }
+    
+    Assert-Count -Expected $num -Presented $result1
+    Write-Host -Object $count1.Milliseconds -NoNewline
+
+    $count2 = Measure-Command {
+        $result2 = Get-ChildItem | Get-FilesDetail -DetailName "Date created"
+    }
+    
+    # $result[100] | Format-Table -AutoSize | Out-String | Write-Host
+
+    Assert-Count -Expected $num -Presented $result2
+    Write-Host -Object $count2.Milliseconds -NoNewline
+}
+
 function FilesTest_GetFilesDetail_Simple{
     
     $file = New-TestingFile -PassThru
