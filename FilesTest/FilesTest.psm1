@@ -367,17 +367,16 @@ function FilesTest_GetFilesDetails_Simple{
 
     $result = Get-FilesDetails -Path $file
 
-    Assert-AreEqual -Expected $file.Name                                    -Presented $result.Name
-    Assert-AreEqual -Expected $file.Name                                    -Presented $result.Filename
-    Assert-AreEqual -Expected ($file.CreationTime | Get-Date -Format "g")   -Presented $result."Date created"
-    Assert-AreEqual -Expected ($file.LastAccessTime | Get-Date -Format "g") -Presented $result."Date accessed"
-    Assert-AreEqual -Expected ($file.LastWriteTime | Get-Date -Format "g")  -Presented $result."Date modified"
-    Assert-AreEqual -Expected ($file.Extension)                             -Presented $result."File extension"
-
-    Assert-AreEqual -Expected ($file.FullName)                              -Presented $result.Path
-    Assert-AreEqual -Expected ($file.Directory.Name)                        -Presented $result."Folder name"
-    Assert-AreEqual -Expected ($file.DirectoryName)                         -Presented $result."Folder path"
-    Assert-AreEqual -Expected $file.Length                                  -Presented $result.Size.Substring(0,2)
+    Assert-AreEqual -Expected $file.Name                                    -Presented $result.Name                -Comment Name               
+    Assert-AreEqual -Expected $file.Name                                    -Presented $result.Filename            -Comment Filename           
+    Assert-AreEqual -Expected ($file.CreationTime | Get-Date -Format "g")   -Presented $result."Date created"      -Comment "Date created"     
+    Assert-AreEqual -Expected ($file.LastAccessTime | Get-Date -Format "g") -Presented $result."Date accessed"     -Comment "Date accessed"    
+    Assert-AreEqual -Expected ($file.LastWriteTime | Get-Date -Format "g")  -Presented $result."Date modified"     -Comment "Date modified"    
+    Assert-AreEqual -Expected ($file.Extension)                             -Presented $result."File extension"    -Comment "File extension"   
+    Assert-AreEqual -Expected ($file.FullName)                              -Presented $result.Path                -Comment "Path"
+    Assert-AreEqual -Expected ($file.Directory.Name)                        -Presented $result."Folder name"       -Comment "Folder name"      
+    Assert-AreEqual -Expected ($file.DirectoryName)                         -Presented $result."Folder path"       -Comment "Folder path"      
+    Assert-AreEqual -Expected $file.Length                                  -Presented $result.Size.Substring(0,2) -Comment "Size"
 
     ## Properties
     # Name                      Property       string Name {get;}
@@ -458,8 +457,6 @@ function FilesTest_GetFilesDetails_SimpleManyFiles{
     $count2 = Measure-Command {
         $result2 = Get-ChildItem | Get-FilesDetail -DetailName "Date created"
     }
-    
-    # $result[100] | Format-Table -AutoSize | Out-String | Write-Host
 
     Assert-Count -Expected $num -Presented $result2
     Write-Host -Object $count2.Milliseconds -NoNewline
